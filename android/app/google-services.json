@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "214591992332",
+    "project_id": "gatex-9d1bd",
+    "storage_bucket": "gatex-9d1bd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:214591992332:android:ae7cbca421795701b1b429",
+        "android_client_info": {
+          "package_name": "com.example.secure_gatex"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBM5b7iappAfrCVhbGxo3OzQVFasA_jmiQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
