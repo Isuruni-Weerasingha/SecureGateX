@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'dart:async';
+import 'dart:convert';
+import 'package:qr_flutter/qr_flutter.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_constants.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/back_button_custom.dart';
 
-/// QR code scan screen
+/// QR code generator screen
 class QRCodeScanScreen extends StatefulWidget {
   final VoidCallback onBack;
 
@@ -20,42 +21,43 @@ class QRCodeScanScreen extends StatefulWidget {
 }
 
 class _QRCodeScanScreenState extends State<QRCodeScanScreen> {
-  bool _scanning = false;
-  int _timeRemaining = 60;
-  String? _error;
-  Timer? _timer;
+  final _usernameController = TextEditingController();
+  final _passwordController = TextEditingController();
+  String? _qrData;
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _usernameController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
-  void _startScan() {
+  void _generateQRCode() {
+    if (_usernameController.text.isEmpty || _passwordController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter both username and password'),
+          backgroundColor: AppColors.red,
+        ),
+      );
+      return;
+    }
+
+    final data = {
+      'username': _usernameController.text,
+      'password': _passwordController.text,
+    };
+
     setState(() {
-      _scanning = true;
-      _error = null;
-      _timeRemaining = 60;
-    });
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_timeRemaining > 0) {
-        setState(() => _timeRemaining--);
-      } else {
-        setState(() {
-          _error = 'QR Code expired. Please generate a new one.';
-          _scanning = false;
-        });
-        timer.cancel();
-      }
+      _qrData = jsonEncode(data);
     });
   }
 
-  void _stopScan() {
-    _timer?.cancel();
+  void _clearQRCode() {
     setState(() {
-      _scanning = false;
-      _timeRemaining = 60;
-      _error = null;
+      _qrData = null;
+      _usernameController.clear();
+      _passwordController.clear();
     });
   }
 
@@ -74,6 +76,7 @@ class _QRCodeScanScreenState extends State<QRCodeScanScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Header
                   Row(
                     children: [
                       BackButtonCustom(onPressed: widget.onBack),
@@ -82,7 +85,7 @@ class _QRCodeScanScreenState extends State<QRCodeScanScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'QR Code Scanner',
+                            'QR Code Generator',
                             style: TextStyle(
                               fontSize: 20,
                               color: Colors.white,
@@ -90,7 +93,7 @@ class _QRCodeScanScreenState extends State<QRCodeScanScreen> {
                             ),
                           ),
                           Text(
-                            'Scan to unlock door',
+                            'Generate QR to unlock door',
                             style: TextStyle(
                               fontSize: 14,
                               color: AppColors.textCyanLight,
@@ -101,295 +104,88 @@ class _QRCodeScanScreenState extends State<QRCodeScanScreen> {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  AspectRatio(
-                    aspectRatio: 1,
-                    child: GlassCard(
-                      padding: EdgeInsets.zero,
-                      child: Stack(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                                colors: [AppColors.slate900, AppColors.slate950],
-                              ),
-                              borderRadius: BorderRadius.circular(24),
-                            ),
-                          ),
-                          if (_scanning)
-                            Center(
-                              child: Container(
-                                width: 256,
-                                height: 256,
-                                decoration: BoxDecoration(
-                                  border: Border.all(
-                                    color: AppColors.cyan,
-                                    width: 2,
-                                  ),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                child: Stack(
-                                  children: [
-                                    Positioned(
-                                      top: 0,
-                                      left: 0,
-                                      child: Container(
-                                        width: 32,
-                                        height: 32,
-                                        decoration: const BoxDecoration(
-                                          border: Border(
-                                            top: BorderSide(color: AppColors.cyan, width: 4),
-                                            left: BorderSide(color: AppColors.cyan, width: 4),
-                                          ),
-                                          borderRadius: BorderRadius.only(
-                                            topLeft: Radius.circular(16),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      top: 0,
-                                      right: 0,
-                                      child: Container(
-                                        width: 32,
-                                        height: 32,
-                                        decoration: const BoxDecoration(
-                                          border: Border(
-                                            top: BorderSide(color: AppColors.cyan, width: 4),
-                                            right: BorderSide(color: AppColors.cyan, width: 4),
-                                          ),
-                                          borderRadius: BorderRadius.only(
-                                            topRight: Radius.circular(16),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      bottom: 0,
-                                      left: 0,
-                                      child: Container(
-                                        width: 32,
-                                        height: 32,
-                                        decoration: const BoxDecoration(
-                                          border: Border(
-                                            bottom: BorderSide(color: AppColors.cyan, width: 4),
-                                            left: BorderSide(color: AppColors.cyan, width: 4),
-                                          ),
-                                          borderRadius: BorderRadius.only(
-                                            bottomLeft: Radius.circular(16),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                    Positioned(
-                                      bottom: 0,
-                                      right: 0,
-                                      child: Container(
-                                        width: 32,
-                                        height: 32,
-                                        decoration: const BoxDecoration(
-                                          border: Border(
-                                            bottom: BorderSide(color: AppColors.cyan, width: 4),
-                                            right: BorderSide(color: AppColors.cyan, width: 4),
-                                          ),
-                                          borderRadius: BorderRadius.only(
-                                            bottomRight: Radius.circular(16),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            )
-                          else
-                            const Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.qr_code_scanner,
-                                    size: 96,
-                                    color: AppColors.textCyanLighter,
-                                  ),
-                                  SizedBox(height: 16),
-                                  Text(
-                                    'Camera preview',
-                                    style: TextStyle(
-                                      color: AppColors.textCyanLighter,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                        ],
+
+                  // Username Input
+                  GlassCard(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    child: TextField(
+                      controller: _usernameController,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        labelText: 'Username',
+                        labelStyle: TextStyle(color: AppColors.textCyanLight),
+                        border: InputBorder.none,
+                        prefixIcon: Icon(Icons.person, color: AppColors.cyan),
                       ),
                     ),
                   ),
-                  if (_scanning) ...[
-                    const SizedBox(height: 16),
+                  const SizedBox(height: 16),
+
+                  // Password Input
+                  GlassCard(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                    child: TextField(
+                      controller: _passwordController,
+                      obscureText: true,
+                      style: const TextStyle(color: Colors.white),
+                      decoration: const InputDecoration(
+                        labelText: 'Password',
+                        labelStyle: TextStyle(color: AppColors.textCyanLight),
+                        border: InputBorder.none,
+                        prefixIcon: Icon(Icons.lock, color: AppColors.cyan),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  // Generate Button
+                  CustomButton(
+                    text: 'Generate QR Code',
+                    onPressed: _generateQRCode,
+                    icon: Icons.qr_code,
+                  ),
+                  const SizedBox(height: 24),
+
+                  // QR Code Display
+                  if (_qrData != null) ...[
                     GlassCard(
-                      padding: const EdgeInsets.all(12),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                      padding: const EdgeInsets.all(24),
+                      child: Column(
                         children: [
-                          const Icon(
-                            Icons.access_time,
-                            size: 16,
-                            color: AppColors.cyan,
+                          Container(
+                            width: 250,
+                            height: 250,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            padding: const EdgeInsets.all(16),
+                            child: QrImageView(
+                              data: _qrData!,
+                              version: QrVersions.auto,
+                              size: 250,
+                              backgroundColor: Colors.white,
+                            ),
                           ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'QR Code valid for: $_timeRemaining s',
-                            style: const TextStyle(
-                              color: AppColors.cyan,
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Show this QR code to unlock the door',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: AppColors.textCyanLight,
                               fontSize: 14,
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ],
-                  if (_error != null) ...[
                     const SizedBox(height: 16),
-                    GlassCard(
-                      padding: const EdgeInsets.all(16),
-                      borderColor: AppColors.red.withOpacity(0.3),
-                      backgroundColor: AppColors.red.withOpacity(0.1),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.error_outline,
-                            color: AppColors.red,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  'Scan Failed',
-                                  style: TextStyle(
-                                    color: AppColors.red,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  _error!,
-                                  style: TextStyle(
-                                    color: AppColors.red.withOpacity(0.8),
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
+                    CustomButton(
+                      text: 'Generate New QR',
+                      onPressed: _clearQRCode,
+                      icon: Icons.refresh,
                     ),
                   ],
-                  const SizedBox(height: 24),
-                  _scanning
-                      ? CustomButton(
-                          text: 'Stop Scanning',
-                          onPressed: _stopScan,
-                          backgroundColor: AppColors.red.withOpacity(0.2),
-                          borderColor: AppColors.red.withOpacity(0.5),
-                          textColor: AppColors.red,
-                          isOutlined: true,
-                          width: double.infinity,
-                          height: 56,
-                        )
-                      : GradientButton(
-                          text: 'Start Scanning',
-                          onPressed: _startScan,
-                          width: double.infinity,
-                          height: 56,
-                        ),
-                  const SizedBox(height: 32),
-                  const Text(
-                    'How to use QR Code Scanner',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  ...['Tap "Start Scanning" to activate the camera',
-                      'Point your camera at the QR code',
-                      'Keep the QR code within the frame',
-                      'The door will unlock automatically']
-                      .asMap()
-                      .entries
-                      .map((entry) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            width: 24,
-                            height: 24,
-                            decoration: BoxDecoration(
-                              color: AppColors.cyan.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: AppColors.cyan.withOpacity(0.3),
-                              ),
-                            ),
-                            child: Center(
-                              child: Text(
-                                '${entry.key + 1}',
-                                style: const TextStyle(
-                                  color: AppColors.cyan,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              entry.value,
-                              style: TextStyle(
-                                color: AppColors.textCyanLight,
-                                fontSize: 14,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-                  const SizedBox(height: 32),
-                  // Next button to continue flow
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pushNamed('activity-log');
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.cyan,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'Continue',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),
@@ -399,4 +195,3 @@ class _QRCodeScanScreenState extends State<QRCodeScanScreen> {
     );
   }
 }
-
