@@ -9,6 +9,7 @@ import '../models/door_status_model.dart';
 import '../services/door_service.dart';
 import '../services/activity_service.dart';
 import '../models/activity_log_model.dart';
+import 'add_guest_screen.dart';
 
 /// Home screen with door control and quick actions
 class HomeScreen extends StatefulWidget {
@@ -334,6 +335,21 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     ],
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  GlassCard(
+                    padding: const EdgeInsets.all(16),
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const AddGuestScreen())),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.person_add, color: AppColors.cyan, size: 24),
+                        const SizedBox(width: 8),
+                        Text('Grant Guest Access', style: TextStyle(color: AppColors.cyan, fontSize: 14, fontWeight: FontWeight.w600)),
+                      ],
+                    ),
                   ),
 
                   const SizedBox(height: 24),

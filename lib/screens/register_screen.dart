@@ -138,14 +138,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
             const SnackBar(
               content: Text('Registration Successful!'),
               backgroundColor: AppColors.green,
-              duration: Duration(seconds: 2),
+              duration: Duration(seconds: 1),
             ),
           );
 
-          // Navigate to login screen after showing success message
-          Future.delayed(const Duration(seconds: 2), () {
+          // Navigate to home screen
+          Future.delayed(const Duration(seconds: 1), () {
             if (mounted) {
-              Navigator.of(context).pushReplacementNamed('login');
+              Navigator.of(context).pushReplacementNamed('home');
             }
           });
         } else {

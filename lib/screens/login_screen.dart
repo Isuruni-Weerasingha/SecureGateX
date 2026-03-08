@@ -9,10 +9,7 @@ import '../services/auth_service.dart';
 class LoginScreen extends StatefulWidget {
   final Function(String userName) onLogin;
 
-  const LoginScreen({
-    super.key,
-    required this.onLogin,
-  });
+  const LoginScreen({super.key, required this.onLogin});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -54,13 +51,13 @@ class _LoginScreenState extends State<LoginScreen> {
         }
 
         if (success && mounted) {
-          widget.onLogin('John Doe'); // Placeholder name
+          Navigator.of(context).pushReplacementNamed('home');
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: ${e.toString()}')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Error: ${e.toString()}')));
         }
       } finally {
         if (mounted) {
@@ -72,11 +69,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _handleBiometricLogin() async {
     setState(() => _isLoading = true);
-    
+
     try {
       final success = await _authService.biometricLogin();
       if (success && mounted) {
-        widget.onLogin('John Doe');
+        Navigator.of(context).pushReplacementNamed('home');
       }
     } catch (e) {
       if (mounted) {
@@ -95,14 +92,14 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
-          gradient: AppColors.backgroundGradient,
-        ),
+        decoration: const BoxDecoration(gradient: AppColors.backgroundGradient),
         child: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(AppConstants.spacingMD),
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: AppConstants.maxMobileWidth),
+              constraints: const BoxConstraints(
+                maxWidth: AppConstants.maxMobileWidth,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -141,6 +138,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   // Title
                   Text(
                     _isLogin ? 'Welcome Back' : 'Create Account',
+                    textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -154,6 +152,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     _isLogin
                         ? 'Login to access your smart lock'
                         : 'Register to get started',
+                        textAlign: TextAlign.center,
                     style: TextStyle(
                       color: AppColors.textCyanLight,
                       fontSize: 14,
@@ -276,7 +275,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       TextButton(
                         onPressed: () {
-                          Navigator.of(context).pushReplacementNamed('register');
+                          Navigator.of(
+                            context,
+                          ).pushReplacementNamed('register');
                         },
                         child: const Text(
                           'Register',
@@ -298,4 +299,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-

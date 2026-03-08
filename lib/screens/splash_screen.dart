@@ -2,141 +2,106 @@ import 'package:flutter/material.dart';
 import '../utils/app_colors.dart';
 import '../utils/app_constants.dart';
 
-/// Splash screen with app logo and branding
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends StatelessWidget {
   final VoidCallback onComplete;
 
-  const SplashScreen({
-    super.key,
-    required this.onComplete,
-  });
-
-  @override
-  State<SplashScreen> createState() => _SplashScreenState();
-}
-
-class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    
-    _controller = AnimationController(
-      duration: AppConstants.animationMedium,
-      vsync: this,
-    );
-
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
-    );
-
-    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
-
-    _controller.forward();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
+  const SplashScreen({super.key, required this.onComplete});
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
-          gradient: AppColors.backgroundGradient,
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Color(0xFF0A1628), Color(0xFF0D1B2A), Color(0xFF1B263B)],
+          ),
         ),
         child: SafeArea(
-          child: Center(
-            child: FadeTransition(
-              opacity: _fadeAnimation,
-              child: ScaleTransition(
-                scale: _scaleAnimation,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    // Logo Container
-                    Container(
-                      width: 128,
-                      height: 128,
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [AppColors.cyan, AppColors.blue],
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppConstants.spacingMD),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: AppConstants.maxMobileWidth,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 160),
+
+                  // Lock Icon
+                  Container(
+                    width: 110,
+                    height: 110,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: AppColors.cyan.withOpacity(0.6),
+                          blurRadius: 40,
+                          spreadRadius: 10,
                         ),
-                        borderRadius: BorderRadius.circular(24),
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppColors.cyan.withOpacity(0.5),
-                            blurRadius: 20,
-                            spreadRadius: 0,
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        Icons.lock,
-                        size: 64,
-                        color: Colors.white,
-                      ),
+                      ],
                     ),
-
-                    const SizedBox(height: 24),
-
-                    // App Name
-                    ShaderMask(
-                      shaderCallback: (bounds) => const LinearGradient(
-                        colors: [AppColors.cyan, AppColors.blue],
-                      ).createShader(bounds),
-                      child: const Text(
-                        AppConstants.appName,
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
+                    child: const Icon(
+                      Icons.lock,
+                      size: 60,
+                      color: AppColors.cyan,
                     ),
+                  ),
 
-                    const SizedBox(height: 12),
+                  const SizedBox(height: 50),
 
-                    // Tagline
-                    Text(
-                      AppConstants.appTagline,
+                  // Title
+                  RichText(
+                    textAlign: TextAlign.center,
+                    text: const TextSpan(
                       style: TextStyle(
-                        color: AppColors.textCyanLight,
-                        fontSize: 14,
-                        letterSpacing: 0.5,
+                        fontSize: 34,
+                        fontWeight: FontWeight.bold,
                       ),
-                      textAlign: TextAlign.center,
+                      children: [
+                        TextSpan(
+                          text: 'Welcome to\n',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        TextSpan(
+                          text: 'SecureGateX',
+                          style: TextStyle(color: AppColors.cyan),
+                        ),
+                      ],
                     ),
+                  ),
 
-                    const SizedBox(height: 48),
+                  const SizedBox(height: 20),
 
-                    // Get Started Button
-                    ElevatedButton(
-                      onPressed: () {
-                        widget.onComplete();
-                      },
+                  // Description
+                  Text(
+                    'Unlock your world with the power of blockchain. Secure, seamless, and smart access to your home.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.grey[400],
+                      fontSize: 15,
+                      height: 1.5,
+                    ),
+                  ),
+
+                  const SizedBox(height: 60),
+
+                  // Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: ElevatedButton(
+                      onPressed: onComplete,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.cyan,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 48,
-                          vertical: 16,
-                        ),
+                        backgroundColor: const Color.fromARGB(255, 78, 112, 224),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(30),
                         ),
-                        elevation: 4,
                       ),
                       child: const Text(
                         'Get Started',
@@ -146,8 +111,10 @@ class _SplashScreenState extends State<SplashScreen>
                         ),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+
+                  const SizedBox(height: 20),
+                ],
               ),
             ),
           ),
@@ -156,4 +123,3 @@ class _SplashScreenState extends State<SplashScreen>
     );
   }
 }
-
