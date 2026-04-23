@@ -1,0 +1,65 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // ── users ─────────────────────────────────────────────────────────────
+    match /users/{uid} {
+      allow read, write: if isAuth() && request.auth.uid == uid;
+      match /fingerprints/{fpId} {
+        allow read, write: if isAuth() && request.auth.uid == uid;
+      }
+    }
+
+    // ── doors (multi-door carousel) ───────────────────────────────────────
+    match /doors/{docId} {
+      allow read, update, delete: if isAuth()
+        && resource.data.userId == request.auth.uid;
+      allow create: if isAuth()
+        && request.resource.data.userId == request.auth.uid;
+    }
+
+    // ── door_logs ─────────────────────────────────────────────────────────
+    match /door_logs/{logId} {
+      allow read, create: if isAuth();
+      allow update, delete: if false;
+    }
+
+    // ── door_status ───────────────────────────────────────────────────────
+    match /door_status/{doorId} {
+      allow read, write: if isAuth();
+    }
+
+    // ── guest_access ──────────────────────────────────────────────────────
+    match /guest_access/{guestId} {
+      allow read, write: if isAuth();
+    }
+
+    // ── notifications ─────────────────────────────────────────────────────
+    match /notifications/{notifId} {
+      allow read, write: if isAuth();
+    }
+
+    // ── qr_tokens ─────────────────────────────────────────────────────────
+    match /qr_tokens/{tokenId} {
+      allow read, write: if isAuth();
+    }
+
+    // ── smart_contract ────────────────────────────────────────────────────
+    // Authenticated users can read; app can seed/write when bootstrapping
+    match /smart_contract/{docId} {
+      allow read: if isAuth();
+      allow write: if isAuth();
+    }
+
+    // ── faqs ──────────────────────────────────────────────────────────────
+    // Public read; authenticated write for app seeding
+    match /faqs/{faqId} {
+      allow read: if true;
+      allow write: if isAuth();
+    }
+  }
+}

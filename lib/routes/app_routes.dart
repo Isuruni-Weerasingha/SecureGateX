@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../screens/splash_screen.dart';
 import '../screens/login_screen.dart';
 import '../screens/register_screen.dart';
@@ -8,6 +9,8 @@ import '../screens/home_screen.dart';
 import '../screens/qr_code_scan_screen.dart';
 import '../screens/activity_log_screen.dart';
 import '../screens/guest_access_screen.dart';
+import '../screens/add_guest_screen.dart';
+import '../screens/pin_auth_screen.dart';
 import '../screens/notifications_screen.dart';
 import '../screens/profile_screen.dart';
 import '../screens/settings_screen.dart';
@@ -28,6 +31,8 @@ class AppRoutes {
   static const String qrScan = 'qr-scan';
   static const String activityLog = 'activity-log';
   static const String guestAccess = 'guest-access';
+  static const String addGuest = 'add-guest';
+  static const String pinAuth = 'pin-auth';
   static const String notifications = 'notifications';
   static const String profile = 'profile';
   static const String settings = 'settings';
@@ -45,8 +50,7 @@ class AppRoutes {
           ),
       login: (context) => LoginScreen(
             onLogin: (userName) {
-              // After successful login, navigate to auth-selection
-              Navigator.of(context).pushReplacementNamed(authSelection);
+              Navigator.of(context).pushReplacementNamed(home);
             },
           ),
       register: (context) => const RegisterScreen(),
@@ -60,8 +64,9 @@ class AppRoutes {
             onBack: () => Navigator.of(context).pop(),
           ),
       home: (context) {
+        final user = FirebaseAuth.instance.currentUser;
         return HomeScreen(
-          userName: 'User',
+          userName: user?.displayName ?? user?.email ?? 'User',
           onNavigate: (screen) {
             Navigator.of(context).pushNamed(screen);
           },
@@ -76,12 +81,19 @@ class AppRoutes {
       guestAccess: (context) => GuestAccessScreen(
             onBack: () => Navigator.of(context).pop(),
           ),
+      addGuest: (context) => AddGuestScreen(
+            onBack: () => Navigator.of(context).pop(),
+          ),
+      pinAuth: (context) => PinAuthScreen(
+            onBack: () => Navigator.of(context).pop(),
+          ),
       notifications: (context) => NotificationsScreen(
             onBack: () => Navigator.of(context).pop(),
           ),
       profile: (context) {
+        final user = FirebaseAuth.instance.currentUser;
         return ProfileScreen(
-          userName: 'User',
+          userName: user?.displayName ?? user?.email ?? 'User',
           onNavigate: (screen) {
             Navigator.of(context).pushNamed(screen);
           },

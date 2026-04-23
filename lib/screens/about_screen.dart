@@ -271,64 +271,64 @@ class AboutScreen extends StatelessWidget {
                       );
                     },
                   ),
-                  const SizedBox(height: 24),
-                  GlassCard(
-                    padding: const EdgeInsets.all(20),
-                    borderColor: AppColors.blue.withOpacity(0.2),
-                    backgroundColor: AppColors.blue.withOpacity(0.1),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: AppColors.blue.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: AppColors.blue.withOpacity(0.3),
-                                ),
-                              ),
-                              child: const Icon(
-                                Icons.code,
-                                size: 24,
-                                color: AppColors.blue,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            const Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Final Year Project',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: AppColors.blue,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  Text(
-                                    'Academic Year 2025-2026',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: AppColors.textCyanLight,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        _buildInfoRow('Institution', 'University of Technology'),
-                        _buildInfoRow('Department', 'Computer Science'),
-                        _buildInfoRow('Supervisor', 'Dr. Smith Johnson'),
-                      ],
-                    ),
-                  ),
+                  // const SizedBox(height: 24),
+                  // GlassCard(
+                  //   padding: const EdgeInsets.all(20),
+                  //   borderColor: AppColors.blue.withOpacity(0.2),
+                  //   backgroundColor: AppColors.blue.withOpacity(0.1),
+                  //   child: Column(
+                  //     crossAxisAlignment: CrossAxisAlignment.start,
+                  //     // children: [
+                  //     //   Row(
+                  //     //     children: [
+                  //     //       Container(
+                  //     //         width: 48,
+                  //     //         height: 48,
+                  //     //         decoration: BoxDecoration(
+                  //     //           color: AppColors.blue.withOpacity(0.2),
+                  //     //           borderRadius: BorderRadius.circular(12),
+                  //     //           border: Border.all(
+                  //     //             color: AppColors.blue.withOpacity(0.3),
+                  //     //           ),
+                  //     //         ),
+                  //     //         child: const Icon(
+                  //     //           Icons.code,
+                  //     //           size: 24,
+                  //     //           color: AppColors.blue,
+                  //     //         ),
+                  //     //       ),
+                  //     //       const SizedBox(width: 16),
+                  //     //       const Expanded(
+                  //     //         child: Column(
+                  //     //           crossAxisAlignment: CrossAxisAlignment.start,
+                  //     //           children: [
+                  //     //             // Text(
+                  //     //             //   'Final Year Project',
+                  //     //             //   style: TextStyle(
+                  //     //             //     fontSize: 16,
+                  //     //             //     color: AppColors.blue,
+                  //     //             //     fontWeight: FontWeight.w600,
+                  //     //             //   ),
+                  //     //             // ),
+                  //     //             // Text(
+                  //     //             //   'Academic Year 2025-2026',
+                  //     //             //   style: TextStyle(
+                  //     //             //     fontSize: 12,
+                  //     //             //     color: AppColors.textCyanLight,
+                  //     //             //   ),
+                  //     //             // ),
+                  //     //           ],
+                  //     //         ),
+                  //     //       ),
+                  //     //     ],
+                  //     //   ),
+                  //     //   const SizedBox(height: 16),
+                  //     //   _buildInfoRow('Institution', 'University of Technology'),
+                  //     //   _buildInfoRow('Department', 'Computer Science'),
+                  //     //   _buildInfoRow('Supervisor', 'Dr. Smith Johnson'),
+                  //     // ],
+                  //   ),
+                  // ),
                   const SizedBox(height: 24),
                   GlassCard(
                     padding: const EdgeInsets.all(20),
@@ -383,28 +383,7 @@ class AboutScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 32),
-                  // Next button to continue flow
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pushNamed('help');
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.cyan,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'Continue',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
