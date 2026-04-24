@@ -9,7 +9,7 @@ class AuthService {
 
   User? get currentUser => _auth.currentUser;
 
-  // ─── Sign Up ──────────────────────────────────────────────────────────────
+  //  Sign Up 
   // Creates FirebaseAuth account, sets display name, saves profile to Firestore
   Future<User?> signUp({
     required String email,

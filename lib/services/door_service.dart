@@ -18,7 +18,7 @@ class DoorService {
     {'id': 'back_door',    'name': 'Back Door',    'location': 'Rear Exit'},
   ];
 
-  // ── Seed doors for user if not yet created ────────────────────────────────
+  // ── Seed doors for user if not yet created 
   Future<void> seedDoorsIfEmpty() async {
     final snap = await _doorsCol
         .where('userId', isEqualTo: _uid)

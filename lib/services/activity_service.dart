@@ -5,7 +5,7 @@ import '../models/activity_log_model.dart';
 class ActivityService {
   final _db = FirebaseFirestore.instance;
 
-  // ── Map Firestore doc → ActivityLogModel ──────────────────────────────────
+  //  Map Firestore doc → ActivityLogModel 
   ActivityLogModel _fromDoc(DocumentSnapshot doc) {
     final d = doc.data() as Map<String, dynamic>;
     final action = d['action'] as String? ?? 'unknown';
@@ -31,7 +31,7 @@ class ActivityService {
     );
   }
 
-  // ── All logs ordered by newest first ─────────────────────────────────────
+  //  All logs ordered by newest first 
   Future<List<ActivityLogModel>> getActivities() async {
     final snap = await _db
         .collection('door_logs')
@@ -40,7 +40,7 @@ class ActivityService {
     return snap.docs.map(_fromDoc).toList();
   }
 
-  // ── Last N logs ───────────────────────────────────────────────────────────
+  //  Last N logs 
   Future<List<ActivityLogModel>> getRecentActivities(int limit) async {
     final snap = await _db
         .collection('door_logs')
@@ -50,7 +50,7 @@ class ActivityService {
     return snap.docs.map(_fromDoc).toList();
   }
 
-  // ── Stats: count per action type ──────────────────────────────────────────
+  // Stats: count per action type 
   Future<Map<String, int>> getActivityStats() async {
     final snap = await _db.collection('door_logs').get();
     int unlocks = 0, locks = 0, failed = 0, guest = 0;
@@ -70,7 +70,7 @@ class ActivityService {
     };
   }
 
-  // ── Real-time stream for live updates ────────────────────────────────────
+  //  Real-time stream for live updates 
   Stream<List<ActivityLogModel>> watchActivities() {
     return _db
         .collection('door_logs')
@@ -79,7 +79,7 @@ class ActivityService {
         .map((snap) => snap.docs.map(_fromDoc).toList());
   }
 
-  // ── Log a failed access attempt ───────────────────────────────────────────
+  //  Log a failed access attempt 
   Future<void> logFailedAttempt(String method) async {
     final user = FirebaseAuth.instance.currentUser;
     await _db.collection('door_logs').add({
