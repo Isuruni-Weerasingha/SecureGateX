@@ -36,7 +36,7 @@ class AuthenticationSelectionScreen extends StatelessWidget {
         'icon': Icons.vpn_key,
         'title': 'PIN Authentication',
         'description': 'Enter PIN to unlock',
-        'screen': 'auth-selection',
+        'screen': 'pin-auth',
         'color': AppColors.indigo,
       },
     ];
@@ -151,28 +151,7 @@ class AuthenticationSelectionScreen extends StatelessWidget {
                       textAlign: TextAlign.center,
                     ),
                   ),
-                  const SizedBox(height: 32),
-                  // Next button to continue flow
-                  ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).pushNamed('fingerprint-settings');
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.cyan,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: const Text(
-                      'Continue',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
