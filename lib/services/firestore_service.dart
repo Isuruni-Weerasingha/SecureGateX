@@ -62,9 +62,9 @@ class FirestoreService {
       },
       {
         'order': 5,
-        'question': 'Can I revoke guest access before it expires?',
+        'question': 'Can I remove guest access before it expires?',
         'answer':
-            'Yes. Go to Guest Access and tap the delete icon next to the guest. Access is immediately revoked.',
+            'Yes. Go to Guest Access and tap the delete icon next to the guest. Access is immediately removed.',
       },
     ];
 

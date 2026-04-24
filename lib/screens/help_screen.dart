@@ -39,9 +39,9 @@ class _HelpScreenState extends State<HelpScreen> {
           'All access attempts are recorded on the blockchain creating an immutable audit trail. Smart contracts ensure only authorized users can unlock.',
     },
     {
-      'question': 'Can I revoke guest access before it expires?',
+      'question': 'Can I remove guest access before it expires?',
       'answer':
-          'Yes. Go to Guest Access and tap the delete icon next to the guest. Access is immediately revoked.',
+          'Yes. Go to Guest Access and tap the delete icon next to the guest. Access is immediately removed.',
     },
   ];
 
@@ -75,7 +75,7 @@ class _HelpScreenState extends State<HelpScreen> {
                 ]),
               ),
 
-              // ── Body ────────────────────────────────────────────────────
+              // ── Body 
               Expanded(
                 child: StreamBuilder<QuerySnapshot>(
                   // Load FAQs from Firestore; falls back to static list if empty
