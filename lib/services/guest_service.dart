@@ -60,12 +60,12 @@ class GuestService {
     });
   }
 
-  // ── Revoke (delete) a guest ───────────────────────────────────────────────
+  // ── Remove (delete) a guest 
   Future<void> deleteGuest(String docId) async {
     await _col.doc(docId).delete();
   }
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
+  // ── Helpers 
   static bool isExpired(Timestamp? expiresAt) {
     if (expiresAt == null) return false;
     return expiresAt.toDate().isBefore(DateTime.now());

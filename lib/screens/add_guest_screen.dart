@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'dart:math';
 import '../utils/app_colors.dart';
 import '../utils/app_constants.dart';
 import '../widgets/glass_card.dart';
@@ -23,7 +22,7 @@ class _AddGuestScreenState extends State<AddGuestScreen> {
   final _contactController = TextEditingController();
   final _guestService = GuestService();
 
-  String _accessMethod = 'PIN';
+  String _accessMethod = 'Fingerprint';
   DateTime _expiryTime = DateTime.now().add(const Duration(hours: 24));
   String? _generatedCode;
   bool _isLoading = false;
@@ -34,8 +33,6 @@ class _AddGuestScreenState extends State<AddGuestScreen> {
     _contactController.dispose();
     super.dispose();
   }
-
-  String _generatePIN() => (1000 + Random().nextInt(9000)).toString();
 
   String _generateQRPayload(String name) =>
       'SGX-${name.replaceAll(' ', '_')}-${_expiryTime.millisecondsSinceEpoch}';
@@ -65,9 +62,9 @@ class _AddGuestScreenState extends State<AddGuestScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final name = _nameController.text.trim();
-    final code = _accessMethod == 'PIN'
-        ? _generatePIN()
-        : _generateQRPayload(name);
+    final code = _accessMethod == 'QR Code'
+        ? _generateQRPayload(name)
+        : 'FP-${name.replaceAll(' ', '_')}-${_expiryTime.millisecondsSinceEpoch}';
 
     setState(() {
       _isLoading = true;
@@ -192,12 +189,12 @@ class _AddGuestScreenState extends State<AddGuestScreen> {
                             ),
                           ),
                           style: const TextStyle(color: Colors.white),
-                          items: ['PIN', 'QR Code']
+                          items: ['Fingerprint', 'QR Code']
                               .map((m) =>
                                   DropdownMenuItem(value: m, child: Text(m)))
                               .toList(),
                           onChanged: (v) =>
-                              setState(() => _accessMethod = v ?? 'PIN'),
+                              setState(() => _accessMethod = v ?? 'Fingerprint'),
                         ),
                       ],
                     ),
@@ -276,7 +273,17 @@ class _AddGuestScreenState extends State<AddGuestScreen> {
                             ),
                           ),
                           const SizedBox(height: 16),
-                          if (_accessMethod == 'PIN')
+                          if (_accessMethod == 'QR Code')
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: QrImageView(
+                                  data: _generatedCode!, size: 200),
+                            )
+                          else
                             Container(
                               padding: const EdgeInsets.all(24),
                               decoration: BoxDecoration(
@@ -286,25 +293,20 @@ class _AddGuestScreenState extends State<AddGuestScreen> {
                                     color:
                                         AppColors.cyan.withValues(alpha: 0.3)),
                               ),
-                              child: Text(
-                                _generatedCode!,
-                                style: const TextStyle(
-                                  color: AppColors.cyan,
-                                  fontSize: 48,
-                                  fontWeight: FontWeight.bold,
-                                  letterSpacing: 8,
-                                ),
+                              child: const Column(
+                                children: [
+                                  Icon(Icons.fingerprint,
+                                      size: 64, color: AppColors.cyan),
+                                  SizedBox(height: 12),
+                                  Text(
+                                    'Fingerprint access granted',
+                                    style: TextStyle(
+                                        color: AppColors.cyan,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                ],
                               ),
-                            )
-                          else
-                            Container(
-                              padding: const EdgeInsets.all(16),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: QrImageView(
-                                  data: _generatedCode!, size: 200),
                             ),
                           const SizedBox(height: 16),
                           Text(

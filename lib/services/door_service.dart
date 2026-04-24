@@ -15,7 +15,7 @@ class DoorService {
   static const _defaultDoors = [
     {'id': 'front_door_1', 'name': 'Front Door 1', 'location': 'Main Entrance'},
     {'id': 'front_door_2', 'name': 'Front Door 2', 'location': 'Side Entrance'},
-    {'id': 'back_door',    'name': 'Back Door',    'location': 'Rear Exit'},
+    {'id': 'back_door',    'name': 'Front door',   'location': 'Main Entrance'},
   ];
 
   // ── Seed doors for user if not yet created 

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
@@ -40,7 +39,7 @@ class _GuestAccessViewState extends State<_GuestAccessView> {
     final nameCtrl = TextEditingController();
     final contactCtrl = TextEditingController();
     final formKey = GlobalKey<FormState>();
-    String type = 'PIN';
+    String type = 'Fingerprint';
     int hours = presetHours;
     bool saving = false;
 
@@ -77,8 +76,8 @@ class _GuestAccessViewState extends State<_GuestAccessView> {
                   _dialogDropdown<String>(
                     label: 'Access Method',
                     value: type,
-                    items: const ['PIN', 'QR Code'],
-                    onChanged: (v) => setDialog(() => type = v ?? 'PIN'),
+                    items: const ['Fingerprint', 'QR Code'],
+                    onChanged: (v) => setDialog(() => type = v ?? 'Fingerprint'),
                   ),
                   const SizedBox(height: 12),
                   _dialogDropdown<int>(
@@ -112,9 +111,9 @@ class _GuestAccessViewState extends State<_GuestAccessView> {
                       try {
                         final expiresAt =
                             DateTime.now().add(Duration(hours: hours));
-                        final code = type == 'PIN'
-                            ? (1000 + Random().nextInt(9000)).toString()
-                            : 'SGX-${nameCtrl.text.trim().replaceAll(' ', '_')}-${expiresAt.millisecondsSinceEpoch}';
+                        final code = type == 'QR Code'
+                            ? 'SGX-${nameCtrl.text.trim().replaceAll(' ', '_')}-${expiresAt.millisecondsSinceEpoch}'
+                            : 'FP-${nameCtrl.text.trim().replaceAll(' ', '_')}-${expiresAt.millisecondsSinceEpoch}';
 
                         await _guestService.addGuestWithCode(
                           name: nameCtrl.text.trim(),
@@ -175,28 +174,33 @@ class _GuestAccessViewState extends State<_GuestAccessView> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (type == 'PIN')
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: AppColors.cyan.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.cyan.withOpacity(0.3)),
-                ),
-                child: Text(code,
-                    style: const TextStyle(
-                        color: AppColors.cyan,
-                        fontSize: 40,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 8)),
-              )
-            else
+            if (type == 'QR Code')
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12)),
                 child: QrImageView(data: code, size: 180),
+              )
+            else
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: AppColors.cyan.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.cyan.withValues(alpha: 0.3)),
+                ),
+                child: const Column(
+                  children: [
+                    Icon(Icons.fingerprint, size: 72, color: AppColors.cyan),
+                    SizedBox(height: 12),
+                    Text('Fingerprint access granted',
+                        style: TextStyle(
+                            color: AppColors.cyan,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600)),
+                  ],
+                ),
               ),
             const SizedBox(height: 12),
             Text(
@@ -234,7 +238,7 @@ class _GuestAccessViewState extends State<_GuestAccessView> {
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1B263B),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Revoke Access',
+        title: const Text('Remove Access',
             style: TextStyle(color: Colors.white)),
         content: Text('Remove guest access for $name?',
             style: TextStyle(color: AppColors.textCyanLight)),
@@ -249,7 +253,7 @@ class _GuestAccessViewState extends State<_GuestAccessView> {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10))),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Revoke', style: TextStyle(color: Colors.white)),
+            child: const Text('Remove', style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -257,7 +261,7 @@ class _GuestAccessViewState extends State<_GuestAccessView> {
     if (confirm == true) await _guestService.deleteGuest(docId);
   }
 
-  // ── Dialog helpers ────────────────────────────────────────────────────────
+  // ── Dialog helpers 
   Widget _dialogField({
     required TextEditingController controller,
     required String label,
@@ -327,7 +331,7 @@ class _GuestAccessViewState extends State<_GuestAccessView> {
         child: SafeArea(
           child: Column(
             children: [
-              // ── Header ──────────────────────────────────────────────────
+              // ── Header
               Padding(
                 padding: EdgeInsets.all(size.width * 0.04),
                 child: Row(
@@ -352,7 +356,7 @@ class _GuestAccessViewState extends State<_GuestAccessView> {
                 ),
               ),
 
-              // ── Body ────────────────────────────────────────────────────
+              // ── Body 
               Expanded(
                 child: StreamBuilder<QuerySnapshot>(
                   stream: _guestService.watchGuests(),
@@ -582,7 +586,7 @@ class _GuestAccessViewState extends State<_GuestAccessView> {
                 child: Icon(
                   type == 'QR Code'
                       ? Icons.qr_code_scanner
-                      : Icons.vpn_key,
+                      : Icons.fingerprint,
                   size: size.width * 0.06,
                   color: expired ? AppColors.red : AppColors.cyan,
                 ),
@@ -639,7 +643,7 @@ class _GuestAccessViewState extends State<_GuestAccessView> {
                       expiresAt: expiresAt!.toDate(),
                     ),
                     icon: Icon(
-                        type == 'QR Code' ? Icons.qr_code : Icons.pin,
+                        type == 'QR Code' ? Icons.qr_code : Icons.fingerprint,
                         size: 14,
                         color: AppColors.cyan),
                     label: Text('View Code',
