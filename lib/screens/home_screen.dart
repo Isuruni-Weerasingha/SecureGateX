@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,17 +8,6 @@ import '../widgets/gradient_glass_card.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/icon_button_custom.dart';
 import '../services/door_service.dart';
-
-// Enables mouse/stylus drag on PageView (critical for Flutter web)
-class _DragScrollBehavior extends MaterialScrollBehavior {
-  @override
-  Set<PointerDeviceKind> get dragDevices => {
-        PointerDeviceKind.touch,
-        PointerDeviceKind.mouse,
-        PointerDeviceKind.stylus,
-        PointerDeviceKind.unknown,
-      };
-}
 
 class HomeScreen extends StatefulWidget {
   final String userName;
@@ -37,17 +25,11 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final _doorService = DoorService();
-  final _pageController = PageController(viewportFraction: 0.88);
 
-  // Store doors in state via a StreamSubscription rather than StreamBuilder.
-  // This keeps the PageView widget alive on Firestore updates — only the card
-  // content re-renders, preserving scroll position and gesture state.
-  StreamSubscription<QuerySnapshot>? _doorsSub;
-  List<QueryDocumentSnapshot> _doors = [];
-  bool _doorsLoading = true;
-
-  int _activePage = 0;
-  final Set<String> _loadingDoors = {};
+  StreamSubscription<QuerySnapshot>? _doorSub;
+  QueryDocumentSnapshot? _door;
+  bool _doorLoading = true;
+  bool _isToggling = false;
 
   String get _displayName {
     final user = FirebaseAuth.instance.currentUser;
@@ -58,45 +40,49 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _doorService.seedDoorsIfEmpty();
-    _doorsSub = _doorService.watchDoors().listen((snap) {
+    _doorSub = _doorService.watchDoors().listen((snap) {
       if (!mounted) return;
-      final sorted = [...snap.docs]..sort((a, b) {
+      // Sort and take the first door
+      final docs = [...snap.docs]..sort((a, b) {
           final aId = (a.data() as Map)['doorId'] as String? ?? '';
           final bId = (b.data() as Map)['doorId'] as String? ?? '';
           return aId.compareTo(bId);
         });
       setState(() {
-        _doors = sorted;
-        _doorsLoading = false;
+        _door = docs.isNotEmpty ? docs.first : null;
+        _doorLoading = false;
       });
     });
   }
 
   @override
   void dispose() {
-    _doorsSub?.cancel();
-    _pageController.dispose();
+    _doorSub?.cancel();
     super.dispose();
   }
 
-  Future<void> _toggleDoor(String docId, String doorName, bool lock) async {
-    setState(() => _loadingDoors.add(docId));
+  Future<void> _toggleDoor(bool lock) async {
+    if (_door == null) return;
+    final data = _door!.data() as Map<String, dynamic>;
+    final name = data['name'] as String? ?? 'Door';
+
+    setState(() => _isToggling = true);
     try {
       if (lock) {
-        await _doorService.lockDoor(docId, doorName);
+        await _doorService.lockDoor(_door!.id, name);
       } else {
-        await _doorService.unlockDoor(docId, doorName);
+        await _doorService.unlockDoor(_door!.id, name);
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('Failed to ${lock ? 'lock' : 'unlock'} $doorName'),
+          content: Text('Failed to ${lock ? 'lock' : 'unlock'} $name'),
           backgroundColor: AppColors.red,
           behavior: SnackBarBehavior.floating,
         ));
       }
     } finally {
-      if (mounted) setState(() => _loadingDoors.remove(docId));
+      if (mounted) setState(() => _isToggling = false);
     }
   }
 
@@ -119,7 +105,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final hPad = size.width * 0.04;
-    final carouselHeight = (size.height * 0.38).clamp(260.0, 340.0);
 
     return Scaffold(
       body: Container(
@@ -128,131 +113,65 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // ── Header + "My Doors" label ────────────────────────────────
+              // ── Header ───────────────────────────────────────────────────
               Padding(
                 padding: EdgeInsets.fromLTRB(hPad, hPad, hPad, 0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Flexible(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Welcome back,',
-                                  style: TextStyle(
-                                      fontSize: size.width * 0.05,
-                                      color: Colors.white)),
-                              Text(_displayName,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                      fontSize: size.width * 0.045,
-                                      color: AppColors.cyan,
-                                      fontWeight: FontWeight.w600)),
-                            ],
-                          ),
+                    Flexible(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Welcome back,',
+                              style: TextStyle(
+                                  fontSize: size.width * 0.05,
+                                  color: Colors.white)),
+                          Text(_displayName,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                  fontSize: size.width * 0.045,
+                                  color: AppColors.cyan,
+                                  fontWeight: FontWeight.w600)),
+                        ],
+                      ),
+                    ),
+                    Row(children: [
+                      IconButtonCustom(
+                        icon: Icons.notifications_outlined,
+                        onPressed: () => widget.onNavigate('notifications'),
+                        badge: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                              color: AppColors.red, shape: BoxShape.circle),
                         ),
-                        Row(children: [
-                          IconButtonCustom(
-                            icon: Icons.notifications_outlined,
-                            onPressed: () => widget.onNavigate('notifications'),
-                            badge: Container(
-                              width: 8,
-                              height: 8,
-                              decoration: const BoxDecoration(
-                                  color: AppColors.red,
-                                  shape: BoxShape.circle),
-                            ),
-                          ),
-                          SizedBox(width: size.width * 0.02),
-                          IconButtonCustom(
-                            icon: Icons.menu,
-                            onPressed: () => widget.onNavigate('profile'),
-                          ),
-                        ]),
-                      ],
-                    ),
-                    SizedBox(height: size.height * 0.022),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('My Doors',
-                            style: TextStyle(
-                                fontSize: 15,
-                                color: Colors.white,
-                                fontWeight: FontWeight.w600)),
-                        Text('${_doors.length} door${_doors.length == 1 ? '' : 's'}',
-                            style: const TextStyle(
-                                fontSize: 12,
-                                color: AppColors.textCyanLight)),
-                      ],
-                    ),
-                    SizedBox(height: size.height * 0.012),
+                      ),
+                      SizedBox(width: size.width * 0.02),
+                      IconButtonCustom(
+                        icon: Icons.menu,
+                        onPressed: () => widget.onNavigate('profile'),
+                      ),
+                    ]),
                   ],
                 ),
               ),
 
-              // ── Door Carousel ────────────────────────────────────────────
-              // PageView is a direct child of the outer Column — NOT inside
-              // any scroll container, so swipe gestures are never intercepted.
-              if (_doorsLoading)
-                SizedBox(
-                  height: carouselHeight,
-                  child: const Center(
-                      child: CircularProgressIndicator(color: AppColors.cyan)),
-                )
-              else ...[
-                SizedBox(
-                  height: carouselHeight,
-                  child: PageView.builder(
-                    // Stable key: prevents widget recreation across setState calls
-                    key: const PageStorageKey('door_carousel'),
-                    controller: _pageController,
-                    scrollBehavior: _DragScrollBehavior(),
-                    physics: const PageScrollPhysics(),
-                    itemCount: _doors.length,
-                    onPageChanged: (i) => setState(() => _activePage = i),
-                    itemBuilder: (ctx, i) {
-                      final doc = _doors[i];
-                      final data = doc.data() as Map<String, dynamic>;
-                      return _buildDoorCard(
-                          doc.id, data, size, i == _activePage);
-                    },
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                // Dot indicators
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(_doors.length, (i) {
-                    final active = i == _activePage;
-                    return AnimatedContainer(
-                      duration: const Duration(milliseconds: 300),
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      width: active ? 20 : 7,
-                      height: 7,
-                      decoration: BoxDecoration(
-                        color:
-                            active ? AppColors.cyan : AppColors.cardBorder,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    );
-                  }),
-                ),
-              ],
-
-              // ── Scrollable content below carousel ────────────────────────
+              // ── Scrollable body ──────────────────────────────────────────
               Expanded(
                 child: SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(hPad, 20, hPad, 20),
+                  padding: EdgeInsets.all(hPad),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      // Auth Methods
+                      SizedBox(height: size.height * 0.01),
+
+                      // ── Door Card ────────────────────────────────────────
+                      _buildDoorCard(size),
+
+                      SizedBox(height: size.height * 0.03),
+
+                      // ── Authentication Methods ────────────────────────────
                       const Text('Authentication Methods',
                           style: TextStyle(
                               fontSize: 15,
@@ -281,9 +200,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                     widget.onNavigate('auth-selection'))),
                       ]),
 
-                      const SizedBox(height: 20),
+                      SizedBox(height: size.height * 0.03),
 
-                      // Guest Access
+                      // ── Guest Access ─────────────────────────────────────
                       GlassCard(
                         padding: EdgeInsets.symmetric(
                             horizontal: size.width * 0.05, vertical: 16),
@@ -296,8 +215,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               color: AppColors.indigo.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                  color: AppColors.indigo
-                                      .withValues(alpha: 0.4)),
+                                  color:
+                                      AppColors.indigo.withValues(alpha: 0.4)),
                             ),
                             child: const Icon(Icons.people_outline,
                                 size: 24, color: AppColors.indigo),
@@ -325,9 +244,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         ]),
                       ),
 
-                      const SizedBox(height: 20),
+                      SizedBox(height: size.height * 0.03),
 
-                      // Recent Activity
+                      // ── Recent Activity ──────────────────────────────────
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
@@ -337,8 +256,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   color: Colors.white,
                                   fontWeight: FontWeight.w600)),
                           TextButton(
-                            onPressed: () =>
-                                widget.onNavigate('activity-log'),
+                            onPressed: () => widget.onNavigate('activity-log'),
                             child: const Text('View All',
                                 style: TextStyle(
                                     color: AppColors.cyan, fontSize: 13)),
@@ -419,8 +337,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                           const SizedBox(height: 2),
                                           Text(userName,
                                               style: const TextStyle(
-                                                  color: AppColors
-                                                      .textCyanLight,
+                                                  color:
+                                                      AppColors.textCyanLight,
                                                   fontSize: 12)),
                                         ],
                                       ),
@@ -432,8 +350,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       const SizedBox(width: 4),
                                       Text(_relativeTime(ts),
                                           style: const TextStyle(
-                                              color:
-                                                  AppColors.textCyanLight,
+                                              color: AppColors.textCyanLight,
                                               fontSize: 11)),
                                     ]),
                                   ]),
@@ -454,141 +371,151 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildDoorCard(
-      String docId, Map<String, dynamic> data, Size size, bool isActive) {
-    final name = data['name'] as String? ?? 'Door';
+  Widget _buildDoorCard(Size size) {
+    if (_doorLoading) {
+      return SizedBox(
+        height: 260,
+        child: GradientGlassCard(
+          padding: const EdgeInsets.all(24),
+          glowColor: AppColors.cyan,
+          child: const Center(
+              child: CircularProgressIndicator(color: AppColors.cyan)),
+        ),
+      );
+    }
+
+    if (_door == null) {
+      return GradientGlassCard(
+        padding: const EdgeInsets.all(24),
+        glowColor: AppColors.red,
+        child: const Center(
+          child: Text('No door found.',
+              style: TextStyle(color: AppColors.textCyanLight)),
+        ),
+      );
+    }
+
+    final data = _door!.data() as Map<String, dynamic>;
+    final name = data['name'] as String? ?? 'Front Door';
     final location = data['location'] as String? ?? '';
     final isLocked = data['isLocked'] as bool? ?? true;
-    final isLoading = _loadingDoors.contains(docId);
     final statusColor = isLocked ? AppColors.red : AppColors.green;
-    final iconSize = (size.width * 0.22).clamp(64.0, 110.0);
+    final iconSize = (size.width * 0.28).clamp(80.0, 130.0);
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      margin: EdgeInsets.symmetric(
-          horizontal: size.width * 0.02, vertical: isActive ? 0 : 12),
-      child: GradientGlassCard(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-        glowColor: isActive ? statusColor : Colors.transparent,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Name + status badge
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(name,
+    return GradientGlassCard(
+      padding: EdgeInsets.all(size.width * 0.06),
+      glowColor: statusColor,
+      child: Column(
+        children: [
+          // ── Name + status badge ─────────────────────────────────────
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(name,
+                        style: TextStyle(
+                            fontSize: size.width * 0.05,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600)),
+                    if (location.isNotEmpty)
+                      Text(location,
                           style: const TextStyle(
-                              fontSize: 17,
-                              color: Colors.white,
-                              fontWeight: FontWeight.w600)),
-                      if (location.isNotEmpty)
-                        Text(location,
-                            style: const TextStyle(
-                                fontSize: 12,
-                                color: AppColors.textCyanLight)),
-                    ],
-                  ),
+                              fontSize: 13,
+                              color: AppColors.textCyanLight)),
+                  ],
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 5),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                        color: statusColor.withValues(alpha: 0.4)),
-                  ),
-                  child: Text(
-                    isLocked ? 'Locked' : 'Unlocked',
-                    style: TextStyle(
-                        fontSize: 12,
-                        color: statusColor,
-                        fontWeight: FontWeight.w600),
-                  ),
-                ),
-              ],
-            ),
-
-            // Lock icon + label — Expanded so it fills remaining space
-            Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    width: iconSize,
-                    height: iconSize,
-                    decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                          color: statusColor.withValues(alpha: 0.3),
-                          width: 2),
-                    ),
-                    child: Icon(
-                      isLocked ? Icons.lock : Icons.lock_open,
-                      size: iconSize * 0.46,
-                      color: statusColor,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    isLocked ? 'Door is Locked' : 'Door is Unlocked',
-                    style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold),
-                  ),
-                ],
               ),
-            ),
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(20),
+                  border:
+                      Border.all(color: statusColor.withValues(alpha: 0.4)),
+                ),
+                child: Text(
+                  isLocked ? 'Locked' : 'Unlocked',
+                  style: TextStyle(
+                      fontSize: 13,
+                      color: statusColor,
+                      fontWeight: FontWeight.w600),
+                ),
+              ),
+            ],
+          ),
 
-            // Buttons — always visible at bottom
-            const SizedBox(height: 12),
-            if (isLoading)
-              const LinearProgressIndicator(
-                  color: AppColors.cyan,
-                  backgroundColor: AppColors.cardBackground,
-                  minHeight: 3)
-            else
-              Row(children: [
-                Expanded(
-                  child: CustomButton(
-                    text: 'Unlock',
-                    icon: Icons.lock_open,
-                    onPressed: isLocked
-                        ? () => _toggleDoor(docId, name, false)
-                        : null,
-                    backgroundColor: AppColors.green.withValues(alpha: 0.2),
-                    borderColor: AppColors.green.withValues(alpha: 0.3),
-                    textColor: AppColors.green,
-                    isOutlined: true,
-                    height: 44,
-                  ),
+          SizedBox(height: size.height * 0.03),
+
+          // ── Lock icon ───────────────────────────────────────────────
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            width: iconSize,
+            height: iconSize,
+            decoration: BoxDecoration(
+              color: statusColor.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+              border: Border.all(
+                  color: statusColor.withValues(alpha: 0.3), width: 2),
+            ),
+            child: Icon(
+              isLocked ? Icons.lock : Icons.lock_open,
+              size: iconSize * 0.46,
+              color: statusColor,
+            ),
+          ),
+
+          SizedBox(height: size.height * 0.025),
+
+          Text(
+            isLocked ? 'Door is Locked' : 'Door is Unlocked',
+            style: TextStyle(
+                fontSize: size.width * 0.055,
+                color: Colors.white,
+                fontWeight: FontWeight.bold),
+          ),
+
+          SizedBox(height: size.height * 0.025),
+
+          // ── Lock / Unlock buttons ───────────────────────────────────
+          if (_isToggling)
+            const LinearProgressIndicator(
+                color: AppColors.cyan,
+                backgroundColor: AppColors.cardBackground,
+                minHeight: 3)
+          else
+            Row(children: [
+              Expanded(
+                child: CustomButton(
+                  text: 'Unlock',
+                  icon: Icons.lock_open,
+                  onPressed: isLocked ? () => _toggleDoor(false) : null,
+                  backgroundColor: AppColors.green.withValues(alpha: 0.2),
+                  borderColor: AppColors.green.withValues(alpha: 0.3),
+                  textColor: AppColors.green,
+                  isOutlined: true,
+                  height: size.height * 0.06,
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: CustomButton(
-                    text: 'Lock',
-                    icon: Icons.lock,
-                    onPressed: !isLocked
-                        ? () => _toggleDoor(docId, name, true)
-                        : null,
-                    backgroundColor: AppColors.red.withValues(alpha: 0.2),
-                    borderColor: AppColors.red.withValues(alpha: 0.3),
-                    textColor: AppColors.red,
-                    isOutlined: true,
-                    height: 44,
-                  ),
+              ),
+              SizedBox(width: size.width * 0.04),
+              Expanded(
+                child: CustomButton(
+                  text: 'Lock',
+                  icon: Icons.lock,
+                  onPressed: !isLocked ? () => _toggleDoor(true) : null,
+                  backgroundColor: AppColors.red.withValues(alpha: 0.2),
+                  borderColor: AppColors.red.withValues(alpha: 0.3),
+                  textColor: AppColors.red,
+                  isOutlined: true,
+                  height: size.height * 0.06,
                 ),
-              ]),
-          ],
-        ),
+              ),
+            ]),
+        ],
       ),
     );
   }
